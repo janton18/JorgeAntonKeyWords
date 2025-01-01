@@ -1,23 +1,18 @@
-link: https://github.com/janton18/JorgeAntonMylittleNetflix.git
+link: [https://github.com/janton18/JorgeAntonMylittleNetflix.git](https://github.com/janton18/JorgeAntonKeyWords.git)
 
-## Practice Description
-In this activity, a client web application will be developed using the main web technologies (HTML, CSS, and JavaScript), following the MVC design pattern. The application will serve as a movie database, where data such as the title, director, and the URL of each movie's cover will be stored. Users will be able to view the movie information, add new movies, edit existing ones, delete them, or reset the database. All of these actions will be performed through buttons in the application's interface. The main goal of this activity is for students to become familiar with the development of a complete web application, encompassing everything from interface design to managing stored data in the browser.
+Third Part: Keyword Extraction and Creation of a Custom List
+In this third part of the project, a new feature will be added that allows the application to connect again with The Movie Database (TMDb) API to extract the keywords associated with the found movies and create a custom list based on these keywords. This section will give students the opportunity to practice advanced skills related to Strings, iterators, loops, and regular expressions for text manipulation and analysis. Additionally, this integration will deepen the use of external APIs to enrich the application with real-time data, enhancing the quality and personalization of the user experience.
 
-The development of this application will allow students to learn how to work with the MVC (Model-View-Controller) pattern, which is widely used in modern software development. This pattern facilitates the separation of application logic, data presentation, and user interaction, contributing to cleaner and more maintainable code. Additionally, localStorage will be used to store data in the browser, helping students understand how client-side data persistence options work.
-Currently, the provided code includes the functionality to list existing movies and edit movie information. As part of the practice, students will need to implement the remaining functionalities: create new movies, display them, delete them, and reset the database. Implementing these additional functionalities will give students a deeper understanding of how different parts of an MVC application interact and how events and data flow are managed within the application.
+Objectives of the Third Part
+Practice with Strings, Arrays, and Iterators: Use the extracted keywords from movies to work with textual data, creating lists and analyzing the keywords obtained from the TMDb API. Manipulating these lists will help students understand how to work with dynamic data and process unstructured information effectively.
+Use of Regular Expressions: Apply regular expressions to identify patterns in texts, filter relevant words, and remove special characters. This exercise will enhance understanding of how regular expressions can be used for textual data manipulation, providing a powerful tool for data analysis and cleaning.
+Creation of a Custom List: Build a custom list with the keywords obtained from the API, which will serve as a basis for future analysis and content recommendations. This objective focuses on personalization and the continuous improvement of the user experience through the management of key data.
+Requirements for this Part
+Connect to the TMDb API again to obtain the keywords of a specific movie selected by the user. This will enrich the database with categorized information that can be used to improve search and personalization. The correct implementation of this feature will contribute to a better understanding of integrating external data into web applications.
+Use Strings, iterators, loops, and regular expressions to analyze and process the keywords for each movie and create a custom list with the most relevant keywords. Effective textual data processing is a fundamental skill for any web developer, especially when working with APIs and large volumes of information.
+Add a new view to the application that allows users to view the keywords for each movie and provide the option to add specific keywords to their custom list. This feature aims to offer a more interactive and user-oriented experience, improving the application's usability.
+Configuration for Obtaining Keywords
+To obtain keywords from a movie using the TMDb API, a request must be made to the appropriate endpoint of the API. The process to perform this integration is described below:
 
-## Tasks
-The goal of this practice is to complete the missing functionalities:
-Show: Display information about a movie.
-New: Display the form to add a new movie.
-Create: Add a new movie to the model.
-Delete: Remove a movie from the model (user confirmation required).
-Reset: Restore the model to its initial state.
-
-To implement these functionalities, it is recommended to follow these steps:
-Add the corresponding button in the indicated view, including the specified class and necessary attributes (e.g., data-my-id).
-Configure the router to capture the event and call the appropriate controller, passing the necessary parameters.
-Modify the controller to perform the necessary operations on the model and update the view.
-Modify the view to properly represent the new functionality.
-
-These steps will help structure the implementation and ensure each functionality is developed correctly and efficiently, providing a complete experience in developing a functional web application.
+Summary of the Third Part
+This third part of the exercise will provide students with the opportunity to work with textual data, apply regular expressions, and develop advanced text manipulation skills. Students will learn to analyze and process information obtained from an API and create a custom list that enhances the user experience. Additionally, they will gain a deeper understanding of how keywords and metadata can improve search and personalization in an application. By the end of this part of the exercise, students will have created an application that can extract, analyze, and personalize keywords associated with movies, thereby improving user interaction and personalization capabilities. This will result in a richer user experience tailored to individual interests, allowing users to interact more meaningfully with the available content.
