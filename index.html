@@ -5,33 +5,78 @@
     <title>My Favourite Movies</title>
     <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
     <style>
-        body { --primary: #6200ee; --secondary: #29b6f6; margin: 0px; }
-        * { font-family: 'Roboto', sans-serif; }
-        button { 
-            -webkit-font-smoothing: antialiased;
+        body { 
+            --primary: #6200ee; 
+            --secondary: #29b6f6; 
+            margin: 0px; 
+            background: #f0f0f0;
+        }
+        * { 
+            font-family: 'Roboto', sans-serif; 
+        }
+        button {
             display: inline-block;
-            text-decoration: none;
-            margin: 2px;
+            margin: 5px;
             color: var(--primary);
             background: white;
             border: 1px solid var(--primary);
-            height: 20px;
-            font-size: 9px;
-            text-transform: uppercase;
+            height: 25px;
+            font-size: 12px;
             cursor: pointer;
-            transition: ease-in 0.2s all;
-            padding: 0 8px 0 8px;
         }
-        div#main { padding: 10px; }
-        input { margin-bottom: 5px; margin-top: 2px; padding: 4px; font-size: 12px; }
-        h1 { background: var(--primary); color: white; font-weight: 300; text-transform: uppercase; font-size: 20px; margin: 0px; padding: 15px; }
-        h2 { margin-block-start: 0px; margin-block-end: 10px; font-size: 20px; color: var(--primary); }
-        button:hover { background: var(--primary); color: white; }
-        div.actions { margin-top: 10px; }
-        div.movie, div.keyword { display: inline-block; padding: 10px; margin: 5px; box-shadow: 2px 2px 7px #ccc; }
-        div.movie div.movie-img, div.keyword span { min-height: 50px; cursor: pointer; }
-        div.movie div.title, div.keyword span { text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        div.field { color: var(--primary); text-transform: uppercase; font-size: 12px; }
+        h1 { 
+            background: var(--primary); 
+            color: white; 
+            padding: 15px; 
+            text-transform: uppercase; 
+            margin: 0; 
+        }
+        div#main { 
+            padding: 10px; 
+        }
+        input { 
+            padding: 5px; 
+            margin: 10px 0; 
+            font-size: 14px; 
+            width: 100%; 
+        }
+        /* Layout for movie list (grid or flex) */
+        .movie-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: flex-start;
+        }
+        .movie {
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 180px;
+            padding: 10px;
+            text-align: center;
+        }
+        .movie-img img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+        .title {
+            font-weight: bold;
+            margin: 10px 0;
+            min-height: 40px; /* Keep consistent spacing */
+        }
+        .actions {
+            margin-top: 10px;
+        }
+        /* For detail views, keep a narrower container or full width as you prefer */
+        .detail-container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .field {
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -42,141 +87,216 @@
         const apiKey = '9a60697712520978c710aa4977ea6288';
         localStorage.my_movies = localStorage.my_movies || JSON.stringify([]);
         localStorage.my_keywords = localStorage.my_keywords || JSON.stringify([]);
+        let lastSearchResults = []; // Store the latest search results
 
-        // Views
+        // Helper Function to Clean Keywords
+        const cleanKeyword = (keyword) => {
+            return keyword
+                .replace(/[^a-zñáéíóú0-9 ]+/igm, "") // Remove special chars
+                .trim() // Remove trailing spaces
+                .toLowerCase(); // Convert to lowercase
+        };
+
+        // -- VIEWS --
+
+        // Index view (list of movies in a grid layout)
         const indexView = (movies) => {
-            let view = movies.map((movie, i) => `
-                <div class="movie">
-                   <div class="movie-img">
-                        <img data-my-id="${i}" src="${movie.thumbnail}" onerror="this.src='files/noimage.png'"/>
-                   </div>
-                   <div class="title">
-                       ${movie.title || "<em>No title</em>"}
-                   </div>
-                   <div class="actions">
-                       <button class="show" data-my-id="${i}">Show</button>
-                       <button class="delete" data-my-id="${i}">Delete</button>
-                       <button class="edit" data-my-id="${i}">Edit</button>
-                       <button class="keywords" data-my-id="${movie.id}">View Keywords</button>
+            // Use a container movie-list to apply a flex or grid layout
+            return `
+                <div class="movie-list">
+                    ${movies.map((movie, i) => `
+                    <div class="movie">
+                        <div class="movie-img">
+                            <img data-my-id="${i}" src="${movie.thumbnail}" onerror="this.src='files/noimage.png'"/>
+                        </div>
+                        <div class="title">
+                            ${movie.title || "<em>No title</em>"}
+                        </div>
+                        <div class="actions">
+                            <button class="show" data-my-id="${i}">Show</button>
+                            <button class="delete" data-my-id="${i}">Delete</button>
+                            <button class="edit" data-my-id="${i}">Edit</button>
+                            <button class="keywords" data-my-id="${movie.id}">View Keywords</button>
+                        </div>
                     </div>
+                    `).join('')}
                 </div>
-            `).join('') + `
                 <div class="actions">
                     <button class="new">Add</button>
                     <button class="search">Search</button>
                     <button class="reset">Reset</button>
                     <button class="my-keywords">My Keywords</button>
-                </div>`;
-            return view;
+                </div>
+            `;
         };
 
-        const editView = (i, movie) => `
-            <h2>Edit Movie</h2>
-            <div class="field">
-                Title <br>
-                <input type="text" id="title" placeholder="Title" value="${movie.title}">
-            </div>
-            <div class="field">
-                Director <br>
-                <input type="text" id="director" placeholder="Director" value="${movie.director}">
-            </div>
-            <div class="field">
-                Thumbnail <br>
-                <input type="text" id="thumbnail" placeholder="Thumbnail URL" value="${movie.thumbnail}">
-            </div>
-            <div class="actions">
-                <button class="update" data-my-id="${i}">Update</button>
-                <button class="index">Back</button>
-            </div>`;
-
+        // Show (detail) view
         const showView = (movie) => `
-            <h2>${movie.title}</h2>
-            <p>Directed by ${movie.director}</p>
-            <img src="${movie.thumbnail}" onerror="this.src='files/noimage.png'"/>
-            <div class="actions">
-                <button class="index">Back</button>
-            </div>`;
+            <div class="detail-container">
+                <div class="actions">
+                    <button class="index">Back</button>
+                </div>
+                <h2>${movie.title}</h2>
+                <p><strong>Director:</strong> ${movie.director}</p>
+                <p><img src="${movie.thumbnail}" style="max-width: 200px;" onerror="this.src='files/noimage.png'"/></p>
+            </div>
+        `;
 
+        // Edit view
+        const editView = (i, movie) => `
+            <div class="detail-container">
+                <div class="actions">
+                    <button class="index">Back</button>
+                </div>
+                <h2>Edit Movie</h2>
+                <div class="field">
+                    Title <br>
+                    <input type="text" id="title" placeholder="Title" value="${movie.title}">
+                </div>
+                <div class="field">
+                    Director <br>
+                    <input type="text" id="director" placeholder="Director" value="${movie.director}">
+                </div>
+                <div class="field">
+                    Thumbnail <br>
+                    <input type="text" id="thumbnail" placeholder="Thumbnail URL" value="${movie.thumbnail}">
+                </div>
+                <div class="actions">
+                    <button class="update" data-my-id="${i}">Update</button>
+                </div>
+            </div>
+        `;
+
+        // New view
         const newView = () => `
-            <h2>Create Movie</h2>
-            <div class="field">
-                Title <br>
-                <input type="text" id="title" placeholder="Title">
+            <div class="detail-container">
+                <div class="actions">
+                    <button class="index">Back</button>
+                </div>
+                <h2>Create Movie</h2>
+                <div class="field">
+                    Title <br>
+                    <input type="text" id="title" placeholder="Title">
+                </div>
+                <div class="field">
+                    Director <br>
+                    <input type="text" id="director" placeholder="Director">
+                </div>
+                <div class="field">
+                    Thumbnail <br>
+                    <input type="text" id="thumbnail" placeholder="Thumbnail URL">
+                </div>
+                <div class="actions">
+                    <button class="create">Create</button>
+                </div>
             </div>
-            <div class="field">
-                Director <br>
-                <input type="text" id="director" placeholder="Director">
-            </div>
-            <div class="field">
-                Thumbnail <br>
-                <input type="text" id="thumbnail" placeholder="Thumbnail URL">
-            </div>
-            <div class="actions">
-                <button class="create">Create</button>
-                <button class="index">Back</button>
-            </div>`;
-            const searchView = () => `
-            <h2>Search Movies</h2>
-            <div class="field">
-                Search Term <br>
-                <input type="text" id="search" placeholder="Enter movie title">
-            </div>
-            <div class="actions">
-                <button class="search-api">Search</button>
-                <button class="index">Back</button>
-            </div>`;
+        `;
 
+        // Search view
+        const searchView = () => `
+            <div class="detail-container">
+                <div class="actions">
+                    <button class="index">Back</button>
+                </div>
+                <h2>Search Movies</h2>
+                <div class="field">
+                    Search Term <br>
+                    <input type="text" id="search" placeholder="Enter movie title">
+                </div>
+                <div class="actions">
+                    <button class="search-api">Search</button>
+                </div>
+            </div>
+        `;
+
+        // Search results view
         const resultsView = (results) => `
-            <h2>Search Results</h2>
-            ${results.length > 0 ? results.map((movie, i) => `
-                <div class="movie">
-                   <div class="movie-img">
-                        <img src="https://image.tmdb.org/t/p/w200${movie.poster_path}" onerror="this.src='files/noimage.png'"/>
-                   </div>
-                   <div class="title">
-                       ${movie.title || "<em>No title</em>"}
-                   </div>
-                   <div class="actions">
-                       <button class="add-from-api" data-my-id="${i}">Add</button>
-                   </div>
-                </div>`).join('') : '<p>No results found.</p>'}
-            <div class="actions">
-                <button class="index">Back</button>
-            </div>`;
+            <div class="detail-container">
+                <div class="actions">
+                    <button class="index">Back</button>
+                </div>
+                <h2>Search Results</h2>
+                ${
+                    results.length > 0 
+                    ? results.map((movie, i) => `
+                        <div class="movie" style="display:inline-block; width:180px; margin:10px; vertical-align:top;">
+                            <div class="movie-img">
+                                <img src="https://image.tmdb.org/t/p/w200${movie.poster_path}" 
+                                    onerror="this.src='files/noimage.png'" 
+                                    style="width:100%;" />
+                            </div>
+                            <div class="title">
+                                ${movie.title || "<em>No title</em>"}
+                            </div>
+                            <div class="actions">
+                                <button class="add-from-api" data-my-id="${i}">Add</button>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<p>No results found.</p>'
+                }
+            </div>
+        `;
 
-
-
+        // Keywords view
         const keywordsView = (keywords) => `
-            <h2>Movie Keywords</h2>
-            ${keywords.length > 0 ? keywords.map(keyword => `
-                <div class="keyword">
-                    <span>${keyword}</span>
-                    <button class="add-keyword" data-keyword="${keyword}">Add to My Keywords</button>
-                </div>`).join('') : '<p>No keywords available.</p>'}
-            <div class="actions">
-                <button class="index">Back</button>
-            </div>`;
+            <div class="detail-container">
+                <div class="actions">
+                    <button class="index">Back</button>
+                </div>
+                <h2>Movie Keywords</h2>
+                ${
+                    keywords.length > 0
+                    ? keywords.map(keyword => `
+                        <div class="keyword">
+                            <span>${keyword}</span>
+                            <button class="add-keyword" data-keyword="${keyword}">Add to My Keywords</button>
+                        </div>
+                    `).join('')
+                    : '<p>No keywords available.</p>'
+                }
+            </div>
+        `;
 
+        // My keywords view
         const myKeywordsView = () => {
             const myKeywords = JSON.parse(localStorage.my_keywords);
             const keywordsHtml = myKeywords.map((keyword, i) => `
                 <div class="keyword">
                     <span>${keyword}</span>
                     <button class="remove-keyword" data-keyword-index="${i}">Remove</button>
-                </div>`).join('');
+                </div>
+            `).join('');
             return `
-                <h2>My Keywords</h2>
-                ${keywordsHtml || '<p>No keywords in your list.</p>'}
-                <div class="actions">
-                    <button class="index">Back</button>
-                </div>`;
+                <div class="detail-container">
+                    <div class="actions">
+                        <button class="index">Back</button>
+                    </div>
+                    <h2>My Keywords</h2>
+                    ${keywordsHtml || '<p>No keywords in your list.</p>'}
+                </div>
+            `;
         };
 
-        // Controllers
-        const indexContr = () => document.getElementById('main').innerHTML = indexView(JSON.parse(localStorage.my_movies));
+        // -- CONTROLLERS --
 
-        const newContr = () => document.getElementById('main').innerHTML = newView();
+        // Show index
+        const indexContr = () => {
+            document.getElementById('main').innerHTML = indexView(JSON.parse(localStorage.my_movies));
+        };
 
+        // Show details
+        const showContr = (i) => {
+            const movies = JSON.parse(localStorage.my_movies);
+            document.getElementById('main').innerHTML = showView(movies[i]);
+        };
+
+        // New
+        const newContr = () => {
+            document.getElementById('main').innerHTML = newView();
+        };
+
+        // Create
         const createContr = () => {
             const movies = JSON.parse(localStorage.my_movies);
             const newMovie = {
@@ -185,12 +305,17 @@
                 director: document.getElementById('director').value || 'Unknown',
                 thumbnail: document.getElementById('thumbnail').value || 'files/noimage.png',
             };
-            if (movies.some(m => m.title === newMovie.title)) return alert('Movie already exists!');
+            // Check if movie already exists
+            if (movies.some(m => m.title === newMovie.title)) {
+                alert('Movie already exists!');
+                return;
+            }
             movies.push(newMovie);
             localStorage.my_movies = JSON.stringify(movies);
             indexContr();
         };
 
+        // Delete
         const deleteContr = (i) => {
             const movies = JSON.parse(localStorage.my_movies);
             if (confirm('Delete this movie?')) {
@@ -199,13 +324,14 @@
                 indexContr();
             }
         };
-        const showContr = (i) => {
-            let movie = JSON.parse(localStorage.my_movies)[i];
-            document.getElementById('main').innerHTML = showView(movie);
+
+        // Edit
+        const editContr = (i) => {
+            const movies = JSON.parse(localStorage.my_movies);
+            document.getElementById('main').innerHTML = editView(i, movies[i]);
         };
 
-        const editContr = (i) => document.getElementById('main').innerHTML = editView(i, JSON.parse(localStorage.my_movies)[i]);
-
+        // Update
         const updateContr = (i) => {
             const movies = JSON.parse(localStorage.my_movies);
             const movie = movies[i];
@@ -216,28 +342,67 @@
             indexContr();
         };
 
-        const fetchKeywords = (movieId) => {
-            fetch(`https://api.themoviedb.org/3/movie/${movieId}/keywords?api_key=${apiKey}`)
-                .then(res => res.json())
+        // Search
+        const searchContr = () => {
+            document.getElementById('main').innerHTML = searchView();
+        };
+
+        // Search via API
+        const searchApiContr = () => {
+            const searchTerm = document.getElementById('search').value.trim();
+            if (!searchTerm) {
+                alert('Please enter a search term.');
+                return;
+            }
+
+            fetch(`https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(searchTerm)}`)
+                .then(response => response.json())
                 .then(data => {
-                    const keywords = data.keywords.map(k => k.name);
-                    document.getElementById('main').innerHTML = keywordsView(keywords);
+                    if (data.results && data.results.length > 0) {
+                        lastSearchResults = data.results; // Save results
+                        document.getElementById('main').innerHTML = resultsView(data.results);
+                    } else {
+                        document.getElementById('main').innerHTML = '<p>No results found.</p>';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error fetching search results:', err);
+                    document.getElementById('main').innerHTML = '<p>Error fetching search results. Please try again later.</p>';
                 });
         };
 
-        const addKeywordContr = (keyword) => {
+        // Fetch keywords from API
+        const fetchKeywordsContr = (movieId) => {
+            fetch(`https://api.themoviedb.org/3/movie/${movieId}/keywords?api_key=${apiKey}`)
+                .then(response => response.json())
+                .then(data => {
+                    const processedKeywords = data.keywords.map(k => cleanKeyword(k.name));
+                    document.getElementById('main').innerHTML = keywordsView(processedKeywords);
+                })
+                .catch(err => {
+                    console.error('Error fetching keywords:', err);
+                    document.getElementById('main').innerHTML = '<p>Error fetching keywords. Please try again later.</p>';
+                });
+        };
+
+        // Add keyword to localStorage
+        const addKeywordToList = (keyword) => {
             const myKeywords = JSON.parse(localStorage.my_keywords);
             if (!myKeywords.includes(keyword)) {
                 myKeywords.push(keyword);
                 localStorage.my_keywords = JSON.stringify(myKeywords);
-                alert(`Keyword "${keyword}" added!`);
+                alert(`Keyword "${keyword}" added to your list!`);
             } else {
                 alert(`Keyword "${keyword}" is already in your list.`);
             }
         };
 
-        const myKeywordsContr = () => document.getElementById('main').innerHTML = myKeywordsView();
+        // Show my keywords
+        const myKeywordsContr = () => {
+            document.getElementById('main').innerHTML = myKeywordsView();
+        };
 
+        // Remove keyword
         const removeKeywordContr = (index) => {
             const myKeywords = JSON.parse(localStorage.my_keywords);
             myKeywords.splice(index, 1);
@@ -245,18 +410,42 @@
             myKeywordsContr();
         };
 
+        // Add selected movie from API results
+        const addMovieFromSearch = (index) => {
+            const movies = JSON.parse(localStorage.my_movies);
+            const movieToAdd = lastSearchResults[index];
+
+            if (movies.some(movie => movie.id === movieToAdd.id)) {
+                alert('This movie is already in your list.');
+                return;
+            }
+            movies.push({
+                id: movieToAdd.id,
+                title: movieToAdd.title,
+                thumbnail: `https://image.tmdb.org/t/p/w200${movieToAdd.poster_path}`,
+                director: movieToAdd.director || 'Unknown',
+            });
+            localStorage.my_movies = JSON.stringify(movies);
+            alert(`"${movieToAdd.title}" has been added to your list!`);
+        };
+
+        // -- ROUTING / EVENT HANDLERS --
         document.addEventListener('DOMContentLoaded', indexContr);
-        document.addEventListener('click', ev => {
+        document.addEventListener('click', (ev) => {
             if (ev.target.matches('.index')) indexContr();
             else if (ev.target.matches('.new')) newContr();
             else if (ev.target.matches('.create')) createContr();
             else if (ev.target.matches('.edit')) editContr(Number(ev.target.dataset.myId));
             else if (ev.target.matches('.update')) updateContr(Number(ev.target.dataset.myId));
             else if (ev.target.matches('.delete')) deleteContr(Number(ev.target.dataset.myId));
-            else if (ev.target.matches('.keywords')) fetchKeywords(Number(ev.target.dataset.myId));
-            else if (ev.target.matches('.add-keyword')) addKeywordContr(ev.target.dataset.keyword);
+            else if (ev.target.matches('.search')) searchContr();
+            else if (ev.target.matches('.search-api')) searchApiContr();
+            else if (ev.target.matches('.add-from-api')) addMovieFromSearch(Number(ev.target.dataset.myId));
+            else if (ev.target.matches('.keywords')) fetchKeywordsContr(Number(ev.target.dataset.myId));
+            else if (ev.target.matches('.add-keyword')) addKeywordToList(ev.target.dataset.keyword);
             else if (ev.target.matches('.my-keywords')) myKeywordsContr();
             else if (ev.target.matches('.remove-keyword')) removeKeywordContr(Number(ev.target.dataset.keywordIndex));
+            else if (ev.target.matches('.show')) showContr(Number(ev.target.dataset.myId));
         });
     </script>
 </body>
